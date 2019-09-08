@@ -1,0 +1,6 @@
+name: FactBungee
+main: net.factmc.FactBungee.Main
+version: 2.3.1
+author: TrollyLoki
+
+depend: [LuckPerms, Votifier, FactCore]
