@@ -267,6 +267,7 @@ public class FactDataCommand extends Command implements TabExecutor {
 		
 		String list = "points";
 		if (sender.hasPermission("factbungee.factdata.seen")) list += "|seen";
+		if (sender.hasPermission("factbungee.factdata.playtime")) list += "|playtime";
 		if (sender.hasPermission("factbungee.factdata.ip")) list += "|ip";
 		if (sender.hasPermission("factbungee.factdata.reset")) list += "|reset";
 		sender.sendMessage(new TextComponent(ChatColor.RED + "Usage: /" + this.getName() + " <" + list + ">"));
@@ -304,7 +305,8 @@ public class FactDataCommand extends Command implements TabExecutor {
 				
 			}
 			
-			else if (args[0].equalsIgnoreCase("reset") || args[0].equalsIgnoreCase("ip") || args[0].equalsIgnoreCase("seen")) {
+			else if (args[0].equalsIgnoreCase("reset") || args[0].equalsIgnoreCase("ip")
+					|| args[0].equalsIgnoreCase("seen") || args[0].equalsIgnoreCase("playtime")) {
 				if (sender.hasPermission("factbungee.factdata." + args[0].toLowerCase())) {
 					
 					if (args.length < 3 && args.length > 1) {
@@ -320,6 +322,7 @@ public class FactDataCommand extends Command implements TabExecutor {
 		
 		List<String> list = toList("points");
 		if (sender.hasPermission("factbungee.factdata.seen")) list.add("seen");
+		if (sender.hasPermission("factbungee.factdata.playtime")) list.add("playtime");
 		if (sender.hasPermission("factbungee.factdata.ip")) list.add("ip");
 		if (sender.hasPermission("factbungee.factdata.reset")) list.add("reset");
 		if (args.length > 0) return filter(list, args[0]);
