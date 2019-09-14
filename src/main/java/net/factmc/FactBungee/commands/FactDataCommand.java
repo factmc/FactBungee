@@ -10,8 +10,6 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -244,20 +242,8 @@ public class FactDataCommand extends Command implements TabExecutor {
 					}
 					
 					String name = FactSQLConnector.getName(uuid);
-					try {
-						
-						PreparedStatement delete = FactSQLConnector.getMysql().getConnection()
-							.prepareStatement("DELETE FROM " + FactSQLConnector.getStatsTable() + " WHERE `UUID`=?");
-						delete.setString(1, uuid.toString());
-						
-						delete.executeUpdate();
-						sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + "Successfully reset " + name));
-						
-						
-					} catch (SQLException e) {
-						e.printStackTrace();
-						sender.sendMessage(new TextComponent(PREFIX + ChatColor.RED + "Failed to reset " + name));
-					}
+					FactSQLConnector.deleteRow(FactSQLConnector.getStatsTable(), new String[] {"UUID"}, new Object[] {uuid.toString()});
+					sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + "Successfully reset " + name));
 					return;
 					
 				}
