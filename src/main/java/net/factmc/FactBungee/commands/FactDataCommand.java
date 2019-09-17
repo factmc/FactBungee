@@ -157,19 +157,39 @@ public class FactDataCommand extends Command implements TabExecutor {
 				if (sender.hasPermission("factbungee.factdata.ip")) {
 					
 					if (args.length < 2) {
-						sender.sendMessage(new TextComponent(ChatColor.RED + "Usage: /" + this.getName() + " ip <player>"));
+						sender.sendMessage(new TextComponent(ChatColor.RED + "Usage: /" + this.getName() + " ip <player|ip>"));
 						return;
 					}
 					
-					UUID uuid = FactSQLConnector.getUUID(args[1]);
-					if (uuid == null) {
-						sender.sendMessage(new TextComponent(PREFIX + ChatColor.YELLOW + "Unable to find " + args[1]));
+					String ip = null;
+					if (args[1].matches("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$"))
+						ip = args[1];
+					else {
+						UUID uuid = FactSQLConnector.getUUID(args[1]);
+						if (uuid == null) {
+							sender.sendMessage(new TextComponent(PREFIX + ChatColor.YELLOW + "Unable to find " + args[1]));
+							return;
+						}
+						ip = FactSQLConnector.getStringValue(FactSQLConnector.getStatsTable(), uuid, "ADDRESS");
+					}
+					
+					if (ip == null) {
+						sender.sendMessage(new TextComponent(PREFIX + ChatColor.YELLOW + "No valid address found for " + args[1]));
 						return;
 					}
 					
-					String name = FactSQLConnector.getName(uuid);
-					sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + name + "'s last known IP address is "
-							.replaceAll(" ", " " + ChatColor.GREEN) + FactSQLConnector.getAddress(uuid).getHostAddress()));
+					
+					List<Object> names = FactSQLConnector.getValues(FactSQLConnector.getStatsTable(), new String[] {"ADDRESS"},
+							new Object[] {ip}, "NAME");
+					if (names.isEmpty()) {
+						sender.sendMessage(new TextComponent(PREFIX + ChatColor.RED + "No players found for " + ip));
+						return;
+					}
+					
+					sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + "Players found for " + ip + ":"));
+					for (Object name : names) {
+						sender.sendMessage(new TextComponent(ChatColor.GREEN + " - " + name.toString()));
+					}
 					return;
 					
 				}
