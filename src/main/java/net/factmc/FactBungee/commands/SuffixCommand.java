@@ -1,5 +1,6 @@
 package net.factmc.FactBungee.commands;
 
+import net.factmc.FactCore.CoreUtils;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -47,7 +48,7 @@ public class SuffixCommand extends Command implements TabExecutor {
 		else {
 			
 			UUID uuid = player.getUniqueId();
-			String suffix = combine(args, 0);
+			String suffix = CoreUtils.combine(args, 0);
 			/*if (suffix.startsWith("-p") && args.length > 1) {
 				
 				User user = BungeePerms.getInstance().getPermissionsManager().getUser(args[1]);
@@ -89,27 +90,6 @@ public class SuffixCommand extends Command implements TabExecutor {
 		user.setPermission(node);
 		LuckPerms.getApi().getUserManager().saveUser(user);
 		 
-	}
-	
-	
-	
-	public static String combine(String[] args, int start) {
-		String string = "";
-		
-		for (int i = start; i < args.length; i++) {
-			
-			if (i == args.length - 1) {
-				string += args[i];
-			}
-			
-			else {
-				string += args[i] + " ";
-			}
-			
-		}
-		
-		return string;
-		
 	}
 	
 	

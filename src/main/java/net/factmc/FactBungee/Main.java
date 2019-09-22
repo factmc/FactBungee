@@ -5,6 +5,7 @@ import java.util.List;
 
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
+import net.factmc.FactBungee.commands.BroadcastCommand;
 import net.factmc.FactBungee.commands.DevModeCommand;
 import net.factmc.FactBungee.commands.FactDataCommand;
 import net.factmc.FactBungee.commands.SuffixCommand;
@@ -55,6 +56,7 @@ public class Main extends Plugin {
     	plugin.getProxy().getPluginManager().registerCommand(plugin, new SuffixCommand());
     	plugin.getProxy().getPluginManager().registerCommand(plugin, new FactDataCommand());
     	plugin.getProxy().getPluginManager().registerCommand(plugin, new DevModeCommand());
+    	plugin.getProxy().getPluginManager().registerCommand(plugin, new BroadcastCommand());
     	//plugin.getProxy().getPluginManager().registerCommand(plugin, new ReloadCommand());
     }
     
