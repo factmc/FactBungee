@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
@@ -14,7 +15,7 @@ import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 import net.md_5.bungee.event.EventPriority;
 import net.factmc.FactBungee.Main;
-import net.factmc.FactCore.FactSQLConnector;
+import net.factmc.FactCore.FactSQL;
 
 public class PlayTimeCounter implements Listener {
 	
@@ -55,9 +56,8 @@ public class PlayTimeCounter implements Listener {
 			long miliDiff = this.end.getTime() - this.start.getTime();
 			long add = miliDiff / 1000;
 			
-			long current = FactSQLConnector.getLongValue(FactSQLConnector.getStatsTable(), this.getPlayer().getUniqueId(), "PLAYTIME");
-			
-			FactSQLConnector.setValue(FactSQLConnector.getStatsTable(), this.getPlayer().getUniqueId(), "PLAYTIME", current + add);
+			long current = (long) FactSQL.getInstance().get(FactSQL.getStatsTable(), this.getPlayer().getUniqueId(), "PLAYTIME");
+			FactSQL.getInstance().set(FactSQL.getStatsTable(), this.getPlayer().getUniqueId(), "PLAYTIME", current + add);
 			
 		}
 		
@@ -102,16 +102,16 @@ public class PlayTimeCounter implements Listener {
 	
 	
 	public static void startAutoRefresh() {
-		Main.getPlugin().getProxy().getScheduler().schedule(Main.getPlugin(), new Runnable() {
+		ProxyServer.getInstance().getScheduler().schedule(Main.getPlugin(), new Runnable() {
 
 			@Override
 			public void run() {
 				refresh();
 				
-				for (ProxiedPlayer player : Main.getPlugin().getProxy().getPlayers()) {
+				for (ProxiedPlayer player : ProxyServer.getInstance().getPlayers()) {
 					player.sendMessage(new TextComponent(ChatColor.YELLOW + "" + ChatColor.ITALIC
 							+ "You have received " + POINTS_PER_HALF_HOUR + " points for playing!"));
-					FactSQLConnector.changePoints(player.getUniqueId(), POINTS_PER_HALF_HOUR);
+					FactSQL.getInstance().changePoints(player.getUniqueId(), POINTS_PER_HALF_HOUR);
 				}
 			}
 			
@@ -129,7 +129,7 @@ public class PlayTimeCounter implements Listener {
 		}
 		times.clear();
 		
-		for (ProxiedPlayer player : Main.getPlugin().getProxy().getPlayers()) {
+		for (ProxiedPlayer player : ProxyServer.getInstance().getPlayers()) {
 			times.add(new PlayTimeCounter(player));
 		}
 		

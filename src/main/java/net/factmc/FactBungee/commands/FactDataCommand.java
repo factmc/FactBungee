@@ -1,15 +1,16 @@
 package net.factmc.FactBungee.commands;
 
-import net.factmc.FactBungee.Main;
 import net.factmc.FactCore.CoreUtils;
-import net.factmc.FactCore.FactSQLConnector;
+import net.factmc.FactCore.FactSQL;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,120 +38,122 @@ public class FactDataCommand extends Command implements TabExecutor {
 		if (args.length > 0) {
 			
 			if (args[0].equalsIgnoreCase("points")) {
+				if (sender.hasPermission("factbungee.factdata.points")) {
 				
-				if (args.length > 1) {
-					
-					// Get Player UUID
-					UUID uuid = null;
-					if (args.length > 2) {
-						uuid = FactSQLConnector.getUUID(args[2]);
-						if (uuid == null) {
-							sender.sendMessage(new TextComponent(PREFIX + ChatColor.YELLOW + "Unable to find " + args[2]));
-							return;
+					if (args.length > 1) {
+						
+						// Get Player UUID
+						UUID uuid = null;
+						if (args.length > 2) {
+							uuid = FactSQL.getInstance().getUUID(args[2]);
+							if (uuid == null) {
+								sender.sendMessage(new TextComponent(PREFIX + ChatColor.YELLOW + "Unable to find " + args[2]));
+								return;
+							}
 						}
+						
+						
+						// Get Points
+						if (args[1].equalsIgnoreCase("get")) {
+							
+							if (args.length < 3) {
+								sender.sendMessage(new TextComponent(ChatColor.RED + "Usage: /" + this.getName()
+										+ " points get <player>"));
+								return;
+							}
+							
+							int points = FactSQL.getInstance().getPoints(uuid);
+							String name = FactSQL.getInstance().getName(uuid);
+							sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + name + " has " + points + " points"));
+							return;
+							
+						}
+						
+						// Set Points
+						else if (args[1].equalsIgnoreCase("set")) {
+							
+							if (args.length < 4) {
+								sender.sendMessage(new TextComponent(ChatColor.RED + "Usage: /" + this.getName()
+										+ " points set <player> <amount>"));
+								return;
+							}
+							
+							try {
+								
+								int newPoints = Integer.parseInt(args[3]);
+								if (newPoints < 0) throw new NumberFormatException();
+								FactSQL.getInstance().setPoints(uuid, newPoints);
+								String name = FactSQL.getInstance().getName(uuid);
+								
+								sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + name + " now has " + newPoints + " points"));
+								
+							} catch (NumberFormatException e) {
+								sender.sendMessage(new TextComponent(ChatColor.RED + "That is not a valid number"));
+							}
+							return;
+							
+						}
+						
+						// Add Points
+						else if (args[1].equalsIgnoreCase("add")) {
+							
+							if (args.length < 4) {
+								sender.sendMessage(new TextComponent(ChatColor.RED + "Usage: /" + this.getName()
+										+ " points add <player> <amount>"));
+								return;
+							}
+							
+							try {
+								
+								int add = Integer.parseInt(args[3]);
+								if (add < 0) throw new NumberFormatException();
+								FactSQL.getInstance().changePoints(uuid, add);
+								String name = FactSQL.getInstance().getName(uuid);
+								
+								int points = FactSQL.getInstance().getPoints(uuid);
+								sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + name + " now has " + points + " points"));
+								
+							} catch (NumberFormatException e) {
+								sender.sendMessage(new TextComponent(ChatColor.RED + "That is not a valid number"));
+							}
+							return;
+							
+						}
+						
+						// Remove Points
+						else if (args[1].equalsIgnoreCase("remove")) {
+							
+							if (args.length < 4) {
+								sender.sendMessage(new TextComponent(ChatColor.RED + "Usage: /" + this.getName()
+										+ " points remove <player> <amount>"));
+								return;
+							}
+							
+							try {
+								
+								int remove = Integer.parseInt(args[3]);
+								if (remove < 0) throw new NumberFormatException();
+								FactSQL.getInstance().changePoints(uuid, -remove);
+								String name = FactSQL.getInstance().getName(uuid);
+								
+								int points = FactSQL.getInstance().getPoints(uuid);
+								sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + name + " now has " + points + " points"));
+								
+							} catch (NumberFormatException e) {
+								sender.sendMessage(new TextComponent(ChatColor.RED + "That is not a valid number"));
+							}
+							return;
+							
+						}
+						
 					}
 					
-					
-					// Get Points
-					if (args[1].equalsIgnoreCase("get")) {
-						
-						if (args.length < 3) {
-							sender.sendMessage(new TextComponent(ChatColor.RED + "Usage: /" + this.getName()
-									+ " points get <player>"));
-							return;
-						}
-						
-						int points = FactSQLConnector.getPoints(uuid);
-						String name = FactSQLConnector.getName(uuid);
-						sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + name + " has " + points + " points"));
-						return;
-						
-					}
-					
-					// Set Points
-					else if (args[1].equalsIgnoreCase("set")) {
-						
-						if (args.length < 4) {
-							sender.sendMessage(new TextComponent(ChatColor.RED + "Usage: /" + this.getName()
-									+ " points set <player> <amount>"));
-							return;
-						}
-						
-						try {
-							
-							int newPoints = Integer.parseInt(args[3]);
-							if (newPoints < 0) throw new NumberFormatException();
-							FactSQLConnector.setPoints(uuid, newPoints);
-							String name = FactSQLConnector.getName(uuid);
-							
-							sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + name + " now has " + newPoints + " points"));
-							
-						} catch (NumberFormatException e) {
-							sender.sendMessage(new TextComponent(ChatColor.RED + "That is not a valid number"));
-						}
-						return;
-						
-					}
-					
-					// Add Points
-					else if (args[1].equalsIgnoreCase("add")) {
-						
-						if (args.length < 4) {
-							sender.sendMessage(new TextComponent(ChatColor.RED + "Usage: /" + this.getName()
-									+ " points add <player> <amount>"));
-							return;
-						}
-						
-						try {
-							
-							int add = Integer.parseInt(args[3]);
-							if (add < 0) throw new NumberFormatException();
-							FactSQLConnector.changePoints(uuid, add);
-							String name = FactSQLConnector.getName(uuid);
-							
-							int points = FactSQLConnector.getPoints(uuid);
-							sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + name + " now has " + points + " points"));
-							
-						} catch (NumberFormatException e) {
-							sender.sendMessage(new TextComponent(ChatColor.RED + "That is not a valid number"));
-						}
-						return;
-						
-					}
-					
-					// Remove Points
-					else if (args[1].equalsIgnoreCase("remove")) {
-						
-						if (args.length < 4) {
-							sender.sendMessage(new TextComponent(ChatColor.RED + "Usage: /" + this.getName()
-									+ " points remove <player> <amount>"));
-							return;
-						}
-						
-						try {
-							
-							int remove = Integer.parseInt(args[3]);
-							if (remove < 0) throw new NumberFormatException();
-							FactSQLConnector.changePoints(uuid, -remove);
-							String name = FactSQLConnector.getName(uuid);
-							
-							int points = FactSQLConnector.getPoints(uuid);
-							sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + name + " now has " + points + " points"));
-							
-						} catch (NumberFormatException e) {
-							sender.sendMessage(new TextComponent(ChatColor.RED + "That is not a valid number"));
-						}
-						return;
-						
-					}
-					
+					// Points Command Help
+					sender.sendMessage(new TextComponent(ChatColor.RED + "Usage: /" + this.getName()
+							+ " points <get|set|add|remove> <player> [amount]"));
+					return;
+				
 				}
-				
-				// Points Command Help
-				sender.sendMessage(new TextComponent(ChatColor.RED + "Usage: /" + this.getName()
-						+ " points <get|set|add|remove> <player> [amount]"));
-				return;
-				
 			}
 			
 			else if (args[0].equalsIgnoreCase("ip")) {
@@ -165,12 +168,12 @@ public class FactDataCommand extends Command implements TabExecutor {
 					if (args[1].matches("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$"))
 						ip = args[1];
 					else {
-						UUID uuid = FactSQLConnector.getUUID(args[1]);
+						UUID uuid = FactSQL.getInstance().getUUID(args[1]);
 						if (uuid == null) {
 							sender.sendMessage(new TextComponent(PREFIX + ChatColor.YELLOW + "Unable to find " + args[1]));
 							return;
 						}
-						ip = FactSQLConnector.getStringValue(FactSQLConnector.getStatsTable(), uuid, "ADDRESS");
+						ip = FactSQL.getInstance().get(FactSQL.getStatsTable(), uuid, "ADDRESS").toString();
 					}
 					
 					if (ip == null) {
@@ -179,8 +182,7 @@ public class FactDataCommand extends Command implements TabExecutor {
 					}
 					
 					
-					List<Object> names = FactSQLConnector.getValues(FactSQLConnector.getStatsTable(), new String[] {"ADDRESS"},
-							new Object[] {ip}, "NAME");
+					List<Object> names = FactSQL.getInstance().select(FactSQL.getStatsTable(), "NAME", "`ADDRESS`=?", ip);
 					if (names.isEmpty()) {
 						sender.sendMessage(new TextComponent(PREFIX + ChatColor.RED + "No players found for " + ip));
 						return;
@@ -203,21 +205,21 @@ public class FactDataCommand extends Command implements TabExecutor {
 						return;
 					}
 					
-					UUID uuid = FactSQLConnector.getUUID(args[1]);
+					UUID uuid = FactSQL.getInstance().getUUID(args[1]);
 					if (uuid == null) {
 						sender.sendMessage(new TextComponent(PREFIX + ChatColor.YELLOW + "Unable to find " + args[1]));
 						return;
 					}
 					
 					String message;
-					ProxiedPlayer player = Main.getPlugin().getProxy().getPlayer(uuid);
+					ProxiedPlayer player = ProxyServer.getInstance().getPlayer(uuid);
 					if (player != null)
 						message = " is currently online on " + player.getServer().getInfo().getName();
 					else {
-						LocalDateTime lastOnline = FactSQLConnector.getTimestampValue(FactSQLConnector.getStatsTable(), uuid, "LASTONLINE").toLocalDateTime();
+						LocalDateTime lastOnline = ((Timestamp) FactSQL.getInstance().get(FactSQL.getStatsTable(), uuid, "LASTONLINE")).toLocalDateTime();
 						message = " was last online at " + convertLocalDateTime(lastOnline);
 					}
-					String name = FactSQLConnector.getName(uuid);
+					String name = FactSQL.getInstance().getName(uuid);
 					sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + name + message.replaceAll(" ", " " + ChatColor.GREEN)));
 					return;
 					
@@ -232,15 +234,15 @@ public class FactDataCommand extends Command implements TabExecutor {
 						return;
 					}
 					
-					UUID uuid = FactSQLConnector.getUUID(args[1]);
+					UUID uuid = FactSQL.getInstance().getUUID(args[1]);
 					if (uuid == null) {
 						sender.sendMessage(new TextComponent(PREFIX + ChatColor.YELLOW + "Unable to find " + args[1]));
 						return;
 					}
 					
-					long seconds = FactSQLConnector.getLongValue(FactSQLConnector.getStatsTable(), uuid, "PLAYTIME");
+					long seconds = (long) FactSQL.getInstance().get(FactSQL.getStatsTable(), uuid, "PLAYTIME");
 					String message = " has a playtime of " + CoreUtils.convertSeconds(seconds);
-					String name = FactSQLConnector.getName(uuid);
+					String name = FactSQL.getInstance().getName(uuid);
 					sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + name + message.replaceAll(" ", " " + ChatColor.GREEN)));
 					return;
 					
@@ -255,14 +257,14 @@ public class FactDataCommand extends Command implements TabExecutor {
 						return;
 					}
 					
-					UUID uuid = FactSQLConnector.getUUID(args[1]);
+					UUID uuid = FactSQL.getInstance().getUUID(args[1]);
 					if (uuid == null) {
 						sender.sendMessage(new TextComponent(PREFIX + ChatColor.YELLOW + "Unable to find " + args[1]));
 						return;
 					}
 					
-					String name = FactSQLConnector.getName(uuid);
-					FactSQLConnector.deleteRow(FactSQLConnector.getStatsTable(), new String[] {"UUID"}, new Object[] {uuid.toString()});
+					String name = FactSQL.getInstance().getName(uuid);
+					FactSQL.getInstance().delete(FactSQL.getStatsTable(), "`UUID`=?", uuid.toString());
 					sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + "Successfully reset " + name));
 					return;
 					
@@ -271,11 +273,12 @@ public class FactDataCommand extends Command implements TabExecutor {
 			
 		}
 		
-		String list = "points";
-		if (sender.hasPermission("factbungee.factdata.seen")) list += "|seen";
-		if (sender.hasPermission("factbungee.factdata.playtime")) list += "|playtime";
-		if (sender.hasPermission("factbungee.factdata.ip")) list += "|ip";
-		if (sender.hasPermission("factbungee.factdata.reset")) list += "|reset";
+		String list = "";
+		if (sender.hasPermission("factbungee.factdata.points")) list += list.equals("") ? "points" : "|points";
+		if (sender.hasPermission("factbungee.factdata.seen")) list += list.equals("") ? "seen" : "|seen";
+		if (sender.hasPermission("factbungee.factdata.playtime")) list += list.equals("") ? "playtime" : "|playtime";
+		if (sender.hasPermission("factbungee.factdata.ip")) list += list.equals("") ? "ip" : "|ip";
+		if (sender.hasPermission("factbungee.factdata.reset")) list += list.equals("") ? "reset" : "|reset";
 		sender.sendMessage(new TextComponent(ChatColor.RED + "Usage: /" + this.getName() + " <" + list + ">"));
 		
 	}
@@ -293,22 +296,24 @@ public class FactDataCommand extends Command implements TabExecutor {
 		if (args.length > 0) {
 			
 			if (args[0].equalsIgnoreCase("points")) {
-				
-				if (args.length > 2) {
+				if (sender.hasPermission("factbungee.factdata.points")) {
 					
-					if (args.length < 4) {
-						return filter(toList(Main.getPlugin().getProxy().getPlayers()), args[2]);
+					if (args.length > 2) {
+						
+						if (args.length < 4) {
+							return filter(toList(ProxyServer.getInstance().getPlayers()), args[2]);
+						}
+						
+						return toList();
+						
 					}
 					
-					return toList();
+					// Points Command Help
+					List<String> list = toList("get", "set", "add", "remove");
+					if (args.length > 1) return filter(list, args[1]);
+					else return list;
 					
 				}
-				
-				// Points Command Help
-				List<String> list = toList("get", "set", "add", "remove");
-				if (args.length > 1) return filter(list, args[1]);
-				else return list;
-				
 			}
 			
 			else if (args[0].equalsIgnoreCase("reset") || args[0].equalsIgnoreCase("ip")
@@ -316,7 +321,7 @@ public class FactDataCommand extends Command implements TabExecutor {
 				if (sender.hasPermission("factbungee.factdata." + args[0].toLowerCase())) {
 					
 					if (args.length < 3 && args.length > 1) {
-						return filter(toList(Main.getPlugin().getProxy().getPlayers()), args[1]);
+						return filter(toList(ProxyServer.getInstance().getPlayers()), args[1]);
 					}
 					
 					return toList();
@@ -326,7 +331,8 @@ public class FactDataCommand extends Command implements TabExecutor {
 			
 		}
 		
-		List<String> list = toList("points");
+		List<String> list = toList();
+		if (sender.hasPermission("factbungee.factdata.points")) list.add("points");
 		if (sender.hasPermission("factbungee.factdata.seen")) list.add("seen");
 		if (sender.hasPermission("factbungee.factdata.playtime")) list.add("playtime");
 		if (sender.hasPermission("factbungee.factdata.ip")) list.add("ip");

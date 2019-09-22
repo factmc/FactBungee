@@ -1,7 +1,7 @@
 package net.factmc.FactBungee.listeners;
 
-import net.factmc.FactBungee.Main;
 import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.ServerPing;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -28,7 +28,7 @@ public class DevelopmentMode implements Listener {
 	
 	private static void kickPlayers() {
 		
-		for (ProxiedPlayer player : Main.getPlugin().getProxy().getPlayers()) {
+		for (ProxiedPlayer player : ProxyServer.getInstance().getPlayers()) {
 			if (!player.hasPermission("factbungee.bypass.dev-mode")) {
 				player.disconnect(new TextComponent(ChatColor.RED + "This server is now in development mode"
 						+ "\nIf you believe this is an error you may contact an admin"

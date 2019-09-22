@@ -6,10 +6,10 @@ import java.util.UUID;
 import com.vexsoftware.votifier.model.Vote;
 import com.vexsoftware.votifier.bungee.events.VotifierEvent;
 
-import net.factmc.FactBungee.Main;
 import net.factmc.FactCore.CoreUtils;
-import net.factmc.FactCore.FactSQLConnector;
+import net.factmc.FactCore.FactSQL;
 import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Listener;
@@ -23,11 +23,10 @@ public class PlayerVote implements Listener {
 	public static void onVote(VotifierEvent event) {
 		Vote vote = event.getVote();
 			
-		UUID uuid = FactSQLConnector.getUUID(vote.getUsername());
+		UUID uuid = FactSQL.getInstance().getUUID(vote.getUsername());
 		if (uuid == null) return;
 		
-		int totalVotes = FactSQLConnector.getIntValue(FactSQLConnector.getStatsTable(), uuid, "TOTALVOTES");
-		FactSQLConnector.setValue(FactSQLConnector.getStatsTable(), uuid, "TOTALVOTES", totalVotes + 1);
+		FactSQL.getInstance().change(FactSQL.getStatsTable(), uuid, "TOTALVOTES", 1);
 		
 		//Player player = Bukkit.getPlayer(UUID.fromString(uuid));
 		
@@ -45,14 +44,13 @@ public class PlayerVote implements Listener {
 		data.set("last-vote.date", fullDate);*/
 		
 		// Give player points
-		int points = FactSQLConnector.getIntValue(FactSQLConnector.getStatsTable(), uuid, "POINTS") + VOTE_POINTS;
-		FactSQLConnector.setValue(FactSQLConnector.getStatsTable(), uuid, "POINTS", points);
+		FactSQL.getInstance().changePoints(uuid, VOTE_POINTS);
 		
 		// Broadcast messages
 		String msg = ChatColor.translateAlternateColorCodes('&', 
 				"&a%displayname%&a voted on &e%site% &aand earned &e" + VOTE_POINTS + " &apoints!");
 		msg = addVoteInfo(msg, vote, uuid);
-		for (ProxiedPlayer p : Main.getPlugin().getProxy().getPlayers()) {
+		for (ProxiedPlayer p : ProxyServer.getInstance().getPlayers()) {
 			p.sendMessage(new TextComponent(msg));
 		}
 		
@@ -80,7 +78,7 @@ public class PlayerVote implements Listener {
 		
 		String prefix = CoreUtils.getPrefix(uuid);
 		String suffix = CoreUtils.getSuffix(uuid);
-		String name = FactSQLConnector.getName(uuid);
+		String name = FactSQL.getInstance().getName(uuid);
 		
 		string = string.replaceAll("%name%", name)
 				.replaceAll("%displayname%", prefix + ChatColor.RESET + name + ChatColor.RESET + suffix);

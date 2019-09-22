@@ -8,6 +8,7 @@ import me.lucko.luckperms.LuckPerms;
 import net.factmc.FactBungee.Main;
 import net.factmc.FactCore.CoreUtils;
 import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.Title;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -55,7 +56,7 @@ public class CommandLogger implements Listener {
 			String msg = PREFIX + ChatColor.translateAlternateColorCodes('&', prefix) + sender.getName()
 					+ " " + ChatColor.BLUE + "used command: " + ChatColor.AQUA + cmd;
 
-			for (ProxiedPlayer player : Main.getPlugin().getProxy().getPlayers()) {
+			for (ProxiedPlayer player : ProxyServer.getInstance().getPlayers()) {
 				
 				if (player.hasPermission("factbungee.seecmds") && enabled(player)) {
 					
@@ -95,7 +96,7 @@ public class CommandLogger implements Listener {
 			ChatColor.UNDERLINE + "play.factmc.net");
 	private static final TextComponent IP_MESSAGE = new TextComponent(ChatColor.DARK_AQUA + "Please use " + IP.getText() +
 			ChatColor.DARK_AQUA + " to connect");
-	private static final Title IP_TITLE = Main.getPlugin().getProxy().createTitle().reset().title(IP).subTitle(IP_MESSAGE)
+	private static final Title IP_TITLE = ProxyServer.getInstance().createTitle().reset().title(IP).subTitle(IP_MESSAGE)
 			.fadeIn(10).stay(60).fadeOut(20);
 	
 	@EventHandler
@@ -105,7 +106,7 @@ public class CommandLogger implements Listener {
 		String usedIP = player.getPendingConnection().getVirtualHost().getHostString();
 		if (!usedIP.endsWith("play.factmc.net")) {
 			
-			Main.getPlugin().getProxy().getScheduler().schedule(Main.getPlugin(), new Runnable() {
+			ProxyServer.getInstance().getScheduler().schedule(Main.getPlugin(), new Runnable() {
 				
 				@Override
 				public void run() {
