@@ -1,6 +1,6 @@
-name: FactBungee
-main: net.factmc.FactBungee.Main
-version: 2.4
+name: ${project.artifactId}
+main: ${project.groupId}.Main
+version: ${project.version}
 author: TrollyLoki
 
 depend: [LuckPerms, Votifier, FactCore]
