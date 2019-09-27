@@ -104,7 +104,7 @@ public class CommandLogger implements Listener {
 		
 		ProxiedPlayer player = event.getPlayer();
 		String usedIP = player.getPendingConnection().getVirtualHost().getHostString();
-		if (!usedIP.endsWith("play.factmc.net")) {
+		if (!(usedIP.equals("srv.factmc.net") || usedIP.equals("play.factmc.net"))) {
 			
 			ProxyServer.getInstance().getScheduler().schedule(Main.getPlugin(), new Runnable() {
 				
