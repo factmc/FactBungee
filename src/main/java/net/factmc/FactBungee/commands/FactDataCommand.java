@@ -1,5 +1,6 @@
 package net.factmc.FactBungee.commands;
 
+import net.factmc.FactBungee.Main;
 import net.factmc.FactCore.CoreUtils;
 import net.factmc.FactCore.FactSQL;
 import net.md_5.bungee.api.ChatColor;
@@ -14,13 +15,17 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public class FactDataCommand extends Command implements TabExecutor {
 	
 	private static final String PREFIX = ChatColor.GOLD + "[" + ChatColor.DARK_GREEN +
 			ChatColor.BOLD + "FactData" + ChatColor.GOLD + "] ";
+	private Map<CommandSender, UUID> resetConfirmMap = new HashMap<CommandSender, UUID>();
 
 	public FactDataCommand() {
 		super("factdata");
@@ -257,6 +262,21 @@ public class FactDataCommand extends Command implements TabExecutor {
 						return;
 					}
 					
+					if (resetConfirmMap.containsKey(sender) && args[1].equalsIgnoreCase("confirm")) {
+						UUID uuid = resetConfirmMap.get(sender);
+						String name = FactSQL.getInstance().getName(uuid);
+						
+						FactSQL.getInstance().delete(FactSQL.getAccessTable(), "`UUID`=?", uuid.toString());
+						FactSQL.getInstance().delete(FactSQL.getAchievementsTable(), "`UUID`=?", uuid.toString());
+						FactSQL.getInstance().delete(FactSQL.getFriendsTable(), "`UUID`=? OR `FRIEND`=?", new Object[] {uuid.toString(), uuid.toString()});
+						FactSQL.getInstance().delete(FactSQL.getOptionsTable(), "`UUID`=?", uuid.toString());
+						FactSQL.getInstance().delete(FactSQL.getStatsTable(), "`UUID`=?", uuid.toString());
+						
+						sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + "Successfully reset " + name));
+						resetConfirmMap.remove(sender);
+						return;
+					}
+					
 					UUID uuid = FactSQL.getInstance().getUUID(args[1]);
 					if (uuid == null) {
 						sender.sendMessage(new TextComponent(PREFIX + ChatColor.YELLOW + "Unable to find " + args[1]));
@@ -264,8 +284,18 @@ public class FactDataCommand extends Command implements TabExecutor {
 					}
 					
 					String name = FactSQL.getInstance().getName(uuid);
-					FactSQL.getInstance().delete(FactSQL.getStatsTable(), "`UUID`=?", uuid.toString());
-					sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + "Successfully reset " + name));
+					
+					sender.sendMessage(new TextComponent(PREFIX + ChatColor.RED + "" + ChatColor.BOLD + "CAUTION!"
+							+ ChatColor.YELLOW + " This action is irreversible. To confirm " + ChatColor.YELLOW + "deleting "
+							+ ChatColor.BOLD + "ALL" + ChatColor.YELLOW + " data on " + name + " type "
+							+ ChatColor.GOLD + "/factdata reset confirm" + ChatColor.YELLOW + " within " + ChatColor.YELLOW + "30 seconds"));
+					resetConfirmMap.put(sender, uuid);
+					Main.getPlugin().getProxy().getScheduler().schedule(Main.getPlugin(), new Runnable() {
+						@Override
+						public void run() {
+							resetConfirmMap.remove(sender);
+						}
+					}, 30, TimeUnit.SECONDS);
 					return;
 					
 				}
