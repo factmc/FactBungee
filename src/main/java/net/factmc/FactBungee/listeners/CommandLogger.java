@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import me.lucko.luckperms.LuckPerms;
 import net.factmc.FactBungee.Main;
 import net.factmc.FactCore.CoreUtils;
 import net.md_5.bungee.api.ChatColor;
@@ -60,7 +59,7 @@ public class CommandLogger implements Listener {
 				
 				if (player.hasPermission("factbungee.seecmds") && enabled(player)) {
 					
-					if (isAbove(player, sender) || player.hasPermission("factbungee.seecmds.all")) {
+					if (CoreUtils.isAbove(player.getUniqueId(), sender.getUniqueId()) || player.hasPermission("factbungee.seecmds.all")) {
 					
 						if (player.getServer().getInfo().getName().equals(sender.getServer().getInfo().getName())) {
 							
@@ -78,15 +77,6 @@ public class CommandLogger implements Listener {
 			}
 			
 		}
-		
-	}
-	
-	public static boolean isAbove(ProxiedPlayer player, ProxiedPlayer otherPlayer) {
-		
-		int rank = LuckPerms.getApi().getGroup(LuckPerms.getApi().getUser(player.getUniqueId()).getPrimaryGroup()).getWeight().getAsInt();
-		int otherRank = LuckPerms.getApi().getGroup(LuckPerms.getApi().getUser(otherPlayer.getUniqueId()).getPrimaryGroup()).getWeight().getAsInt();
-		
-		return rank >= otherRank;
 		
 	}
 	

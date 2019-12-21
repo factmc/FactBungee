@@ -1,6 +1,11 @@
 package net.factmc.FactBungee.commands;
 
 import net.factmc.FactCore.CoreUtils;
+import net.luckperms.api.LuckPermsProvider;
+import net.luckperms.api.model.user.User;
+import net.luckperms.api.node.Node;
+import net.luckperms.api.node.NodeType;
+import net.luckperms.api.node.types.SuffixNode;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -8,11 +13,9 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
 import java.util.ArrayList;
+import java.util.Set;
 import java.util.UUID;
-
-import me.lucko.luckperms.LuckPerms;
-import me.lucko.luckperms.api.Node;
-import me.lucko.luckperms.api.User;
+import java.util.stream.Collectors;
 
 public class SuffixCommand extends Command implements TabExecutor {
 
@@ -81,14 +84,13 @@ public class SuffixCommand extends Command implements TabExecutor {
 	
 	public void setSuffix(UUID uuid, String suffix) {
 		
-		User user = LuckPerms.getApi().getUser(uuid);
-		for (Node n : user.getOwnNodes()) {
-			if (n.isSuffix()) user.unsetPermission(n);
-		}
+		User user = LuckPermsProvider.get().getUserManager().getUser(uuid);
+		Set<Node> suffixes = user.getNodes().stream().filter(NodeType.SUFFIX::matches).collect(Collectors.toSet());
+		suffixes.forEach(node -> user.data().remove(node));
 		
-		Node node = LuckPerms.getApi().getNodeFactory().makeSuffixNode(0, suffix).build();
-		user.setPermission(node);
-		LuckPerms.getApi().getUserManager().saveUser(user);
+		Node node = SuffixNode.builder(suffix, 0).build();
+		user.data().add(node);
+		LuckPermsProvider.get().getUserManager().saveUser(user);
 		 
 	}
 	

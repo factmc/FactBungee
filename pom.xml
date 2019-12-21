@@ -23,9 +23,9 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>me.lucko.luckperms</groupId>
-      <artifactId>luckperms-api</artifactId>
-      <version>4.4</version>
+      <groupId>net.luckperms</groupId>
+      <artifactId>api</artifactId>
+      <version>5.0</version>
       <scope>provided</scope>
     </dependency>
     <!--<dependency>
@@ -41,9 +41,6 @@
       <resource>
         <directory>${project.basedir}/src/main/resources</directory>
         <filtering>true</filtering>
-        <includes>
-          <include>plugin.yml</include>
-        </includes>
       </resource>
     </resources>
   </build>
