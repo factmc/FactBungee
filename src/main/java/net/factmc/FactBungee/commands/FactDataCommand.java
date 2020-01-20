@@ -268,6 +268,7 @@ public class FactDataCommand extends Command implements TabExecutor {
 						
 						FactSQL.getInstance().delete(FactSQL.getAccessTable(), "`UUID`=?", uuid.toString());
 						FactSQL.getInstance().delete(FactSQL.getAchievementsTable(), "`UUID`=?", uuid.toString());
+						FactSQL.getInstance().delete(FactSQL.getBansTable(), "`UUID`=?", uuid.toString());
 						FactSQL.getInstance().delete(FactSQL.getFriendsTable(), "`UUID`=? OR `FRIEND`=?", new Object[] {uuid.toString(), uuid.toString()});
 						FactSQL.getInstance().delete(FactSQL.getOptionsTable(), "`UUID`=?", uuid.toString());
 						FactSQL.getInstance().delete(FactSQL.getStatsTable(), "`UUID`=?", uuid.toString());
@@ -288,7 +289,7 @@ public class FactDataCommand extends Command implements TabExecutor {
 					sender.sendMessage(new TextComponent(PREFIX + ChatColor.RED + "" + ChatColor.BOLD + "CAUTION!"
 							+ ChatColor.YELLOW + " This action is irreversible. To confirm " + ChatColor.YELLOW + "deleting "
 							+ ChatColor.BOLD + "ALL" + ChatColor.YELLOW + " data on " + name + " type "
-							+ ChatColor.GOLD + "/factdata reset confirm" + ChatColor.YELLOW + " within " + ChatColor.YELLOW + "30 seconds"));
+							+ ChatColor.GOLD + "/factdata reset confirm " + ChatColor.YELLOW + "within " + ChatColor.YELLOW + "30 seconds"));
 					resetConfirmMap.put(sender, uuid);
 					Main.getPlugin().getProxy().getScheduler().schedule(Main.getPlugin(), new Runnable() {
 						@Override

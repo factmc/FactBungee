@@ -2,17 +2,12 @@ package net.factmc.FactBungee.listeners;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
-import net.factmc.FactBungee.Main;
 import net.factmc.FactCore.CoreUtils;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ProxyServer;
-import net.md_5.bungee.api.Title;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.ChatEvent;
-import net.md_5.bungee.api.event.PostLoginEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 import net.md_5.bungee.event.EventPriority;
@@ -57,7 +52,7 @@ public class CommandLogger implements Listener {
 
 			for (ProxiedPlayer player : ProxyServer.getInstance().getPlayers()) {
 				
-				if (player.hasPermission("factbungee.seecmds") && enabled(player)) {
+				if (enabled(player) && player.hasPermission("factbungee.seecmds")) {
 					
 					if (CoreUtils.isAbove(player.getUniqueId(), sender.getUniqueId()) || player.hasPermission("factbungee.seecmds.all")) {
 					
@@ -75,35 +70,6 @@ public class CommandLogger implements Listener {
 				}
 				
 			}
-			
-		}
-		
-	}
-	
-	
-	
-	private static final TextComponent IP = new TextComponent(ChatColor.DARK_AQUA + "" + ChatColor.BOLD + "" +
-			ChatColor.UNDERLINE + "play.factmc.net");
-	private static final TextComponent IP_MESSAGE = new TextComponent(ChatColor.DARK_AQUA + "Please use " + IP.getText() +
-			ChatColor.DARK_AQUA + " to connect");
-	private static final Title IP_TITLE = ProxyServer.getInstance().createTitle().reset().title(IP).subTitle(IP_MESSAGE)
-			.fadeIn(10).stay(60).fadeOut(20);
-	
-	@EventHandler
-	public void onPlayerJoin(PostLoginEvent event) {
-		
-		ProxiedPlayer player = event.getPlayer();
-		String usedIP = player.getPendingConnection().getVirtualHost().getHostString();
-		if (!(usedIP.equals("srv.factmc.net") || usedIP.equals("play.factmc.net"))) {
-			
-			ProxyServer.getInstance().getScheduler().schedule(Main.getPlugin(), new Runnable() {
-				
-				@Override
-				public void run() {
-					player.sendMessage(IP_MESSAGE);
-					player.sendTitle(IP_TITLE);
-				}
-			}, 3L, TimeUnit.SECONDS);
 			
 		}
 		

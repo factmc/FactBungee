@@ -18,12 +18,12 @@ public class CmdLogToggleCommand extends Command {
 		
 		if (!(sender instanceof ProxiedPlayer)) return;
 		
-		String toggle = ChatColor.GREEN + "" + ChatColor.BOLD + "ENABLED";
+		String toggle = "now see";
 		if (!CommandLogger.toggle((ProxiedPlayer) sender)) {
-			toggle = ChatColor.RED + "" + ChatColor.BOLD + "DISABLED";
+			toggle = "no longer see";
 		}
 		
-		sender.sendMessage(new TextComponent(CommandLogger.PREFIX + ChatColor.BLUE + "The command log is now " + toggle));
+		sender.sendMessage(new TextComponent(CommandLogger.PREFIX + ChatColor.BLUE + "You can " + toggle + " the command log"));
 		
 	}
 

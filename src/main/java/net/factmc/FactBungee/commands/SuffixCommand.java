@@ -88,8 +88,10 @@ public class SuffixCommand extends Command implements TabExecutor {
 		Set<Node> suffixes = user.getNodes().stream().filter(NodeType.SUFFIX::matches).collect(Collectors.toSet());
 		suffixes.forEach(node -> user.data().remove(node));
 		
-		Node node = SuffixNode.builder(suffix, 0).build();
-		user.data().add(node);
+		if (suffix != null) {
+			Node node = SuffixNode.builder(suffix, 0).build();
+			user.data().add(node);
+		}
 		LuckPermsProvider.get().getUserManager().saveUser(user);
 		 
 	}
