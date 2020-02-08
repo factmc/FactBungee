@@ -169,17 +169,7 @@ public class FactDataCommand extends Command implements TabExecutor {
 						return;
 					}
 					
-					String ip = null;
-					if (args[1].matches("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$"))
-						ip = args[1];
-					else {
-						UUID uuid = FactSQL.getInstance().getUUID(args[1]);
-						if (uuid == null) {
-							sender.sendMessage(new TextComponent(PREFIX + ChatColor.YELLOW + "Unable to find " + args[1]));
-							return;
-						}
-						ip = FactSQL.getInstance().get(FactSQL.getStatsTable(), uuid, "ADDRESS").toString();
-					}
+					String ip = FactSQL.getInstance().getIP(args[1]);
 					
 					if (ip == null) {
 						sender.sendMessage(new TextComponent(PREFIX + ChatColor.YELLOW + "No valid address found for " + args[1]));
@@ -268,7 +258,7 @@ public class FactDataCommand extends Command implements TabExecutor {
 						
 						FactSQL.getInstance().delete(FactSQL.getAccessTable(), "`UUID`=?", uuid.toString());
 						FactSQL.getInstance().delete(FactSQL.getAchievementsTable(), "`UUID`=?", uuid.toString());
-						FactSQL.getInstance().delete(FactSQL.getBansTable(), "`UUID`=?", uuid.toString());
+						FactSQL.getInstance().delete(FactSQL.getModerationTable(), "`USER`=?", uuid.toString());
 						FactSQL.getInstance().delete(FactSQL.getFriendsTable(), "`UUID`=? OR `FRIEND`=?", new Object[] {uuid.toString(), uuid.toString()});
 						FactSQL.getInstance().delete(FactSQL.getOptionsTable(), "`UUID`=?", uuid.toString());
 						FactSQL.getInstance().delete(FactSQL.getStatsTable(), "`UUID`=?", uuid.toString());
