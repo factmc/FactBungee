@@ -22,6 +22,19 @@ public class LoginEvents implements Listener {
 	private static Title title = null;
 	private static String message = null;
 	
+	public void setLoginTitle(String title, String subtitle) {
+		LoginEvents.title = createTitle(ChatColor.translateAlternateColorCodes('&', title), ChatColor.translateAlternateColorCodes('&', subtitle));
+	}
+	public void removeLoginTitle() {
+		LoginEvents.title = null;
+	}
+	
+	public void setLoginMessage(String message) {
+		if (message == null) LoginEvents.message = null;
+		LoginEvents.message = ChatColor.translateAlternateColorCodes('&', message);
+	}
+	
+	
 	private static Title createTitle(String title, String subtitle) {
 		
 		return ProxyServer.getInstance().createTitle().reset().title(new TextComponent(title)).subTitle(new TextComponent(subtitle))
