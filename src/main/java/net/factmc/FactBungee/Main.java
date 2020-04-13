@@ -14,6 +14,7 @@ import net.factmc.FactBungee.listeners.CommandLogger;
 import net.factmc.FactBungee.listeners.DevelopmentMode;
 import net.factmc.FactBungee.listeners.LoginEvents;
 import net.factmc.FactBungee.listeners.PlayerVote;
+import net.factmc.FactBungee.listeners.ServerFallbackListener;
 import net.factmc.FactBungee.sql.PlayTimeCounter;
 
 public class Main extends Plugin {
@@ -49,6 +50,7 @@ public class Main extends Plugin {
     	PlayTimeCounter.startAutoRefresh();
     	listeners.add(new PlayerVote());
     	listeners.add(new DevelopmentMode());
+    	listeners.add(new ServerFallbackListener());
     	
         for (Listener listener : listeners) {
         	getProxy().getPluginManager().registerListener(plugin, listener);
