@@ -1,5 +1,6 @@
 package net.factmc.FactBungee.sql;
 
+import java.net.InetSocketAddress;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.UUID;
@@ -20,7 +21,7 @@ public class SQLData {
 				
 				FactSQL.getInstance().insert(FactSQL.getStatsTable(),
 						new String[] {"UUID", "NAME", "ADDRESS", "POINTS", "PLAYTIME", "FIRSTJOIN", "TOTALVOTES", "PARKOURTIME"},
-						new Object[] {uuid.toString(), player.getName(), player.getAddress().getAddress().getHostAddress(), 0, 0, firstJoin, 0, 0});
+						new Object[] {uuid.toString(), player.getName(), ((InetSocketAddress) player.getSocketAddress()).getHostString(), 0, 0, firstJoin, 0, 0});
 				
 				Main.getPlugin().getLogger().info("Successfully added " + player.getName() + " (" + uuid + ") to the database");
 				
@@ -28,7 +29,7 @@ public class SQLData {
 			else {
 				
 				FactSQL.getInstance().update(FactSQL.getStatsTable(), new String[] {"NAME", "ADDRESS"},
-						new Object[] {player.getName(), player.getAddress().getAddress().getHostAddress()}, "`UUID`=?", uuid.toString());
+						new Object[] {player.getName(), ((InetSocketAddress) player.getSocketAddress()).getHostString()}, "`UUID`=?", uuid.toString());
 				
 			}
 		});
