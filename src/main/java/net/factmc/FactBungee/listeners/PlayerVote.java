@@ -2,8 +2,9 @@ package net.factmc.FactBungee.listeners;
 
 import java.util.List;
 import java.util.UUID;
-
+import java.util.concurrent.CompletableFuture;
 import com.vexsoftware.votifier.model.Vote;
+
 import com.vexsoftware.votifier.bungee.events.VotifierEvent;
 
 import net.factmc.FactCore.CoreUtils;
@@ -22,37 +23,27 @@ public class PlayerVote implements Listener {
 	@EventHandler
 	public static void onVote(VotifierEvent event) {
 		Vote vote = event.getVote();
+		
+		FactSQL.getInstance().select(FactSQL.getStatsTable(), new String[] {"UUID", "TOTALVOTES", "POINTS"}, "`NAME`=?", vote.getUsername()).thenAccept((list) -> {
 			
-		UUID uuid = FactSQL.getInstance().getUUID(vote.getUsername());
-		if (uuid == null) return;
-		
-		FactSQL.getInstance().change(FactSQL.getStatsTable(), uuid, "TOTALVOTES", 1);
-		
-		//Player player = Bukkit.getPlayer(UUID.fromString(uuid));
-		
-		/*FileConfiguration data = Data.getPlayerData(oPlayer);
-		data.set("last-vote.service", vote.getServiceName());
-		data.set("last-vote.address", vote.getAddress());
-		data.set("last-vote.timestamp", vote.getTimeStamp());
-		data.set("last-vote.local-timestamp", vote.getLocalTimestamp());
-		
-		LocalDate date = LocalDate.now(ZoneId.systemDefault());
-		int year = date.getYear();
-		int month = date.getMonthValue();
-		int day = date.getDayOfMonth();
-		String fullDate = (month + "-" + day + "-" + year);
-		data.set("last-vote.date", fullDate);*/
-		
-		// Give player points
-		FactSQL.getInstance().changePoints(uuid, VOTE_POINTS);
-		
-		// Broadcast messages
-		String msg = ChatColor.translateAlternateColorCodes('&', 
-				"&a%displayname%&a voted on &e%site% &aand earned &e" + VOTE_POINTS + " &apoints!");
-		msg = addVoteInfo(msg, vote, uuid);
-		for (ProxiedPlayer p : ProxyServer.getInstance().getPlayers()) {
-			p.sendMessage(new TextComponent(msg));
-		}
+			if (!list.isEmpty()) {
+				UUID uuid = UUID.fromString((String) list.get(0).get("UUID"));
+				int totalVotes = (int) list.get(0).get("TOTALVOTES");
+				int points = (int) list.get(0).get("POINTS");
+				
+				FactSQL.getInstance().update(FactSQL.getStatsTable(), new String[] {"TOTALVOTES", "POINTS"}, new Object[] {totalVotes, points}, "`UUID`=?", uuid);
+				
+				String msgFormat = ChatColor.translateAlternateColorCodes('&', 
+						"&a%displayname%&a voted on &e%site% &aand earned &e" + VOTE_POINTS + " &apoints!");
+				addVoteInfo(msgFormat, vote, uuid).thenAccept((msg) -> {
+					TextComponent component = new TextComponent(msg);
+					for (ProxiedPlayer p : ProxyServer.getInstance().getPlayers()) {
+						p.sendMessage(component);
+					}
+				});
+			}
+			
+		});
 		
 	}
 	
@@ -74,31 +65,41 @@ public class PlayerVote implements Listener {
 		return itemStack;
 	}*/
 	
-	public static String addVoteInfo(String string, Vote vote, UUID uuid) {
-		
-		String prefix = CoreUtils.getPrefix(uuid);
-		String suffix = CoreUtils.getSuffix(uuid);
-		String name = FactSQL.getInstance().getName(uuid);
-		
-		string = string.replaceAll("%name%", name)
-				.replaceAll("%displayname%", prefix + ChatColor.RESET + name + ChatColor.RESET + suffix);
-		
-		string = string.replaceAll("%site%", vote.getServiceName())
-				.replaceAll("%address%", vote.getAddress());
-		
+	public static String addVoteInfo(String string, Vote vote, String prefix, String name, String suffix) {
+		string = string.replaceAll("%name%", name).replaceAll("%displayname%", prefix + ChatColor.RESET + name + ChatColor.RESET + suffix);
+		string = string.replaceAll("%site%", vote.getServiceName()).replaceAll("%address%", vote.getAddress());
 		return string;
 	}
 	
-	@Deprecated
-	public static List<String> addVoteInfo(List<String> strings, Vote vote, UUID uuid) {
-		int i = 0;
-		for (String string : strings) {
-			string = addVoteInfo(string, vote, uuid);
-			strings.set(i, string);
-			i++;
-		}
-		
-		return strings;
+	public static CompletableFuture<String> addVoteInfo(String string, Vote vote, UUID uuid) {
+		CompletableFuture<String> nameFuture = FactSQL.getInstance().getName(uuid);
+		CompletableFuture<String[]> prefixSuffixFuture = CoreUtils.getPrefixSuffix(uuid);
+		return CompletableFuture.allOf(nameFuture, prefixSuffixFuture).thenApply((v) -> {
+			
+			String prefix = prefixSuffixFuture.join()[0];
+			String suffix = prefixSuffixFuture.join()[1];
+			String name = nameFuture.join();
+			
+			return addVoteInfo(string, vote, prefix, name, suffix);
+			
+		});
+	}
+	
+	public static CompletableFuture<List<String>> addVoteInfo(List<String> strings, Vote vote, UUID uuid) {
+		CompletableFuture<String> nameFuture = FactSQL.getInstance().getName(uuid);
+		CompletableFuture<String[]> prefixSuffixFuture = CoreUtils.getPrefixSuffix(uuid);
+		return CompletableFuture.allOf(nameFuture, prefixSuffixFuture).thenApply((v) -> {
+			
+			String prefix = prefixSuffixFuture.join()[0];
+			String suffix = prefixSuffixFuture.join()[1];
+			String name = nameFuture.join();
+			
+			for (int i = 0; i < strings.size(); i++) {
+				strings.set(i, addVoteInfo(strings.get(i), vote, prefix, name, suffix));
+			}
+			return strings;
+			
+		});
 	}
 	
 }

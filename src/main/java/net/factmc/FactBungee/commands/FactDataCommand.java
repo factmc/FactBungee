@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 public class FactDataCommand extends Command implements TabExecutor {
@@ -47,17 +48,6 @@ public class FactDataCommand extends Command implements TabExecutor {
 				
 					if (args.length > 1) {
 						
-						// Get Player UUID
-						UUID uuid = null;
-						if (args.length > 2) {
-							uuid = FactSQL.getInstance().getUUID(args[2]);
-							if (uuid == null) {
-								sender.sendMessage(new TextComponent(PREFIX + ChatColor.YELLOW + "Unable to find " + args[2]));
-								return;
-							}
-						}
-						
-						
 						// Get Points
 						if (args[1].equalsIgnoreCase("get")) {
 							
@@ -67,9 +57,18 @@ public class FactDataCommand extends Command implements TabExecutor {
 								return;
 							}
 							
-							int points = FactSQL.getInstance().getPoints(uuid);
-							String name = FactSQL.getInstance().getName(uuid);
-							sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + name + " has " + points + " points"));
+							FactSQL.getInstance().select(FactSQL.getStatsTable(), new String[] {"NAME", "POINTS"}, "`NAME`=?", args[2]).thenAccept((list) -> {
+								
+								if (list.isEmpty()) {
+									sender.sendMessage(new TextComponent(PREFIX + ChatColor.YELLOW + "Unable to find " + args[2]));
+									return;
+								}
+								
+								int points = (int) list.get(0).get("POINTS");
+								String name = (String) list.get(0).get("NAME");
+								sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + name + " has " + points + " points"));
+								
+							});
 							return;
 							
 						}
@@ -83,18 +82,28 @@ public class FactDataCommand extends Command implements TabExecutor {
 								return;
 							}
 							
-							try {
+							FactSQL.getInstance().select(FactSQL.getStatsTable(), new String[] {"UUID", "NAME"}, "`NAME`=?", args[2]).thenAccept((list) -> {
 								
-								int newPoints = Integer.parseInt(args[3]);
-								if (newPoints < 0) throw new NumberFormatException();
-								FactSQL.getInstance().setPoints(uuid, newPoints);
-								String name = FactSQL.getInstance().getName(uuid);
+								if (list.isEmpty()) {
+									sender.sendMessage(new TextComponent(PREFIX + ChatColor.YELLOW + "Unable to find " + args[2]));
+									return;
+								}
 								
-								sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + name + " now has " + newPoints + " points"));
+								UUID uuid = UUID.fromString((String) list.get(0).get("UUID"));
+								String name = (String) list.get(0).get("NAME");
+								try {
+									
+									int newPoints = Integer.parseInt(args[3]);
+									if (newPoints < 0) throw new NumberFormatException();
+									FactSQL.getInstance().setPoints(uuid, newPoints);
+									
+									sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + name + " now has " + newPoints + " points"));
+									
+								} catch (NumberFormatException e) {
+									sender.sendMessage(new TextComponent(ChatColor.RED + "That is not a valid number"));
+								}
 								
-							} catch (NumberFormatException e) {
-								sender.sendMessage(new TextComponent(ChatColor.RED + "That is not a valid number"));
-							}
+							});
 							return;
 							
 						}
@@ -108,19 +117,30 @@ public class FactDataCommand extends Command implements TabExecutor {
 								return;
 							}
 							
-							try {
+							FactSQL.getInstance().select(FactSQL.getStatsTable(), new String[] {"UUID", "NAME", "POINTS"}, "`NAME`=?", args[2]).thenAccept((list) -> {
 								
-								int add = Integer.parseInt(args[3]);
-								if (add < 0) throw new NumberFormatException();
-								FactSQL.getInstance().changePoints(uuid, add);
-								String name = FactSQL.getInstance().getName(uuid);
+								if (list.isEmpty()) {
+									sender.sendMessage(new TextComponent(PREFIX + ChatColor.YELLOW + "Unable to find " + args[2]));
+									return;
+								}
 								
-								int points = FactSQL.getInstance().getPoints(uuid);
-								sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + name + " now has " + points + " points"));
+								UUID uuid = UUID.fromString((String) list.get(0).get("UUID"));
+								int points = (int) list.get(0).get("POINTS");
+								String name = (String) list.get(0).get("NAME");
+								try {
+									
+									int add = Integer.parseInt(args[3]);
+									if (add < 0) throw new NumberFormatException();
+									int newPoints = points + add;
+									FactSQL.getInstance().setPoints(uuid, newPoints);
+									
+									sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + name + " now has " + newPoints + " points"));
+									
+								} catch (NumberFormatException e) {
+									sender.sendMessage(new TextComponent(ChatColor.RED + "That is not a valid number"));
+								}
 								
-							} catch (NumberFormatException e) {
-								sender.sendMessage(new TextComponent(ChatColor.RED + "That is not a valid number"));
-							}
+							});
 							return;
 							
 						}
@@ -134,19 +154,30 @@ public class FactDataCommand extends Command implements TabExecutor {
 								return;
 							}
 							
-							try {
+							FactSQL.getInstance().select(FactSQL.getStatsTable(), new String[] {"UUID", "NAME", "POINTS"}, "`NAME`=?", args[2]).thenAccept((list) -> {
 								
-								int remove = Integer.parseInt(args[3]);
-								if (remove < 0) throw new NumberFormatException();
-								FactSQL.getInstance().changePoints(uuid, -remove);
-								String name = FactSQL.getInstance().getName(uuid);
+								if (list.isEmpty()) {
+									sender.sendMessage(new TextComponent(PREFIX + ChatColor.YELLOW + "Unable to find " + args[2]));
+									return;
+								}
 								
-								int points = FactSQL.getInstance().getPoints(uuid);
-								sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + name + " now has " + points + " points"));
+								UUID uuid = UUID.fromString((String) list.get(0).get("UUID"));
+								int points = (int) list.get(0).get("POINTS");
+								String name = (String) list.get(0).get("NAME");
+								try {
+									
+									int remove = Integer.parseInt(args[3]);
+									if (remove < 0) throw new NumberFormatException();
+									int newPoints = points - remove;
+									FactSQL.getInstance().setPoints(uuid, newPoints);
+									
+									sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + name + " now has " + newPoints + " points"));
+									
+								} catch (NumberFormatException e) {
+									sender.sendMessage(new TextComponent(ChatColor.RED + "That is not a valid number"));
+								}
 								
-							} catch (NumberFormatException e) {
-								sender.sendMessage(new TextComponent(ChatColor.RED + "That is not a valid number"));
-							}
+							});
 							return;
 							
 						}
@@ -169,24 +200,39 @@ public class FactDataCommand extends Command implements TabExecutor {
 						return;
 					}
 					
-					String ip = FactSQL.getInstance().getIP(args[1]);
-					
-					if (ip == null) {
-						sender.sendMessage(new TextComponent(PREFIX + ChatColor.YELLOW + "No valid address found for " + args[1]));
-						return;
+					CompletableFuture<String> future;
+					if (args[1].matches("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$")) {
+						future = CompletableFuture.completedFuture(args[1]);
+					}
+					else {
+						future = FactSQL.getInstance().select(FactSQL.getStatsTable(), "ADDRESS", "`NAME`=?", args[1]).thenApply((list) -> {
+							if (list.isEmpty()) return null;
+							else return (String) list.get(0);
+						});
 					}
 					
-					
-					List<Object> names = FactSQL.getInstance().select(FactSQL.getStatsTable(), "NAME", "`ADDRESS`=?", ip);
-					if (names.isEmpty()) {
-						sender.sendMessage(new TextComponent(PREFIX + ChatColor.RED + "No players found for " + ip));
-						return;
-					}
-					
-					sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + "Players found for " + ip + ":"));
-					for (Object name : names) {
-						sender.sendMessage(new TextComponent(ChatColor.GREEN + " - " + name.toString()));
-					}
+					future.thenAccept((ip) -> {
+						
+						if (ip == null) {
+							sender.sendMessage(new TextComponent(PREFIX + ChatColor.YELLOW + "No valid address found for " + args[1]));
+							return;
+						}
+						
+						FactSQL.getInstance().select(FactSQL.getStatsTable(), "NAME", "`ADDRESS`=?", ip).thenAccept((list) -> {
+							
+							if (list.isEmpty()) {
+								sender.sendMessage(new TextComponent(PREFIX + ChatColor.RED + "No players found for " + ip));
+								return;
+							}
+							
+							sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + "Players found for " + ip + ":"));
+							for (Object name : list) {
+								sender.sendMessage(new TextComponent(ChatColor.GREEN + " - " + (String) name));
+							}
+							
+						});
+						
+					});
 					return;
 					
 				}
@@ -200,22 +246,25 @@ public class FactDataCommand extends Command implements TabExecutor {
 						return;
 					}
 					
-					UUID uuid = FactSQL.getInstance().getUUID(args[1]);
-					if (uuid == null) {
-						sender.sendMessage(new TextComponent(PREFIX + ChatColor.YELLOW + "Unable to find " + args[1]));
-						return;
-					}
-					
-					String message;
-					ProxiedPlayer player = ProxyServer.getInstance().getPlayer(uuid);
-					if (player != null)
-						message = " is currently online on " + player.getServer().getInfo().getName();
-					else {
-						LocalDateTime lastOnline = ((Timestamp) FactSQL.getInstance().get(FactSQL.getStatsTable(), uuid, "LASTONLINE")).toLocalDateTime();
-						message = " was last online at " + convertLocalDateTime(lastOnline);
-					}
-					String name = FactSQL.getInstance().getName(uuid);
-					sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + name + message.replaceAll(" ", " " + ChatColor.GREEN)));
+					FactSQL.getInstance().select(FactSQL.getStatsTable(), new String[] {"UUID", "NAME", "LASTONLINE"}, "`NAME`=?", args[1]).thenAccept((list) -> {
+						
+						if (list.isEmpty()) {
+							sender.sendMessage(new TextComponent(PREFIX + ChatColor.YELLOW + "Unable to find " + args[1]));
+							return;
+						}
+						
+						String message;
+						ProxiedPlayer player = ProxyServer.getInstance().getPlayer(UUID.fromString((String) list.get(0).get("UUID")));
+						if (player != null)
+							message = " is currently online on " + player.getServer().getInfo().getName();
+						else {
+							LocalDateTime lastOnline = ((Timestamp) list.get(0).get("LASTONLINE")).toLocalDateTime();
+							message = " was last online at " + convertLocalDateTime(lastOnline);
+						}
+						String name = (String) list.get(0).get("NAME");
+						sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + name + message.replaceAll(" ", " " + ChatColor.GREEN)));
+						
+					});
 					return;
 					
 				}
@@ -229,16 +278,19 @@ public class FactDataCommand extends Command implements TabExecutor {
 						return;
 					}
 					
-					UUID uuid = FactSQL.getInstance().getUUID(args[1]);
-					if (uuid == null) {
-						sender.sendMessage(new TextComponent(PREFIX + ChatColor.YELLOW + "Unable to find " + args[1]));
-						return;
-					}
-					
-					long seconds = (long) FactSQL.getInstance().get(FactSQL.getStatsTable(), uuid, "PLAYTIME");
-					String message = " has a playtime of " + CoreUtils.convertSeconds(seconds);
-					String name = FactSQL.getInstance().getName(uuid);
-					sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + name + message.replaceAll(" ", " " + ChatColor.GREEN)));
+					FactSQL.getInstance().select(FactSQL.getStatsTable(), new String[] {"NAME", "PLAYTIME"}, "`NAME`=?", args[1]).thenAccept((list) -> {
+						
+						if (list.isEmpty()) {
+							sender.sendMessage(new TextComponent(PREFIX + ChatColor.YELLOW + "Unable to find " + args[1]));
+							return;
+						}
+						
+						long seconds = (long) list.get(0).get("PLAYTIME");
+						String message = " has a playtime of " + CoreUtils.convertSeconds(seconds);
+						String name = (String) list.get(0).get("NAME");
+						sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + name + message.replaceAll(" ", " " + ChatColor.GREEN)));
+						
+					});
 					return;
 					
 				}
@@ -252,41 +304,49 @@ public class FactDataCommand extends Command implements TabExecutor {
 						return;
 					}
 					
+					
 					if (resetConfirmMap.containsKey(sender) && args[1].equalsIgnoreCase("confirm")) {
+						
 						UUID uuid = resetConfirmMap.get(sender);
-						String name = FactSQL.getInstance().getName(uuid);
-						
-						FactSQL.getInstance().delete(FactSQL.getAccessTable(), "`UUID`=?", uuid.toString());
-						FactSQL.getInstance().delete(FactSQL.getAchievementsTable(), "`UUID`=?", uuid.toString());
-						FactSQL.getInstance().delete(FactSQL.getModerationTable(), "`USER`=?", uuid.toString());
-						FactSQL.getInstance().delete(FactSQL.getFriendsTable(), "`UUID`=? OR `FRIEND`=?", new Object[] {uuid.toString(), uuid.toString()});
-						FactSQL.getInstance().delete(FactSQL.getOptionsTable(), "`UUID`=?", uuid.toString());
-						FactSQL.getInstance().delete(FactSQL.getStatsTable(), "`UUID`=?", uuid.toString());
-						
-						sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + "Successfully reset " + name));
 						resetConfirmMap.remove(sender);
+						FactSQL.getInstance().getName(uuid).thenAccept((name) -> {
+							
+							FactSQL.getInstance().delete(FactSQL.getAccessTable(), "`UUID`=?", uuid.toString());
+							FactSQL.getInstance().delete(FactSQL.getAchievementsTable(), "`UUID`=?", uuid.toString());
+							FactSQL.getInstance().delete(FactSQL.getModerationTable(), "`USER`=?", uuid.toString());
+							FactSQL.getInstance().delete(FactSQL.getFriendsTable(), "`UUID`=? OR `FRIEND`=?", new Object[] {uuid.toString(), uuid.toString()});
+							FactSQL.getInstance().delete(FactSQL.getOptionsTable(), "`UUID`=?", uuid.toString());
+							FactSQL.getInstance().delete(FactSQL.getStatsTable(), "`UUID`=?", uuid.toString());
+							
+							sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + "Successfully reset " + name));
+							
+						});
 						return;
 					}
 					
-					UUID uuid = FactSQL.getInstance().getUUID(args[1]);
-					if (uuid == null) {
-						sender.sendMessage(new TextComponent(PREFIX + ChatColor.YELLOW + "Unable to find " + args[1]));
-						return;
-					}
 					
-					String name = FactSQL.getInstance().getName(uuid);
-					
-					sender.sendMessage(new TextComponent(PREFIX + ChatColor.RED + "" + ChatColor.BOLD + "CAUTION!"
-							+ ChatColor.YELLOW + " This action is irreversible. To confirm " + ChatColor.YELLOW + "deleting "
-							+ ChatColor.BOLD + "ALL" + ChatColor.YELLOW + " data on " + name + " type "
-							+ ChatColor.GOLD + "/factdata reset confirm " + ChatColor.YELLOW + "within " + ChatColor.YELLOW + "30 seconds"));
-					resetConfirmMap.put(sender, uuid);
-					Main.getPlugin().getProxy().getScheduler().schedule(Main.getPlugin(), new Runnable() {
-						@Override
-						public void run() {
-							resetConfirmMap.remove(sender);
+					FactSQL.getInstance().select(FactSQL.getStatsTable(), new String[] {"UUID", "NAME"}, "`NAME`=?", args[1]).thenAccept((list) -> {
+						
+						if (list.isEmpty()) {
+							sender.sendMessage(new TextComponent(PREFIX + ChatColor.YELLOW + "Unable to find " + args[1]));
+							return;
 						}
-					}, 30, TimeUnit.SECONDS);
+						
+						String name = (String) list.get(0).get("NAME");
+						sender.sendMessage(new TextComponent(PREFIX + ChatColor.RED + "" + ChatColor.BOLD + "CAUTION!"
+								+ ChatColor.YELLOW + " This action is irreversible. To confirm " + ChatColor.YELLOW + "deleting "
+								+ ChatColor.BOLD + "ALL" + ChatColor.YELLOW + " data on " + name + " type "
+								+ ChatColor.GOLD + "/factdata reset confirm " + ChatColor.YELLOW + "within " + ChatColor.YELLOW + "30 seconds"));
+						
+						resetConfirmMap.put(sender, UUID.fromString((String) list.get(0).get("UUID")));
+						Main.getPlugin().getProxy().getScheduler().schedule(Main.getPlugin(), new Runnable() {
+							@Override
+							public void run() {
+								resetConfirmMap.remove(sender);
+							}
+						}, 30, TimeUnit.SECONDS);
+						
+					});
 					return;
 					
 				}

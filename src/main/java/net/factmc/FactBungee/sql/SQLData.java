@@ -13,24 +13,25 @@ public class SQLData {
 		
 		UUID uuid = player.getUniqueId();
 		
-		if (!FactSQL.getInstance().exists(uuid)) {
-			
-			Timestamp firstJoin = new Timestamp((new Date()).getTime());
-			
-			FactSQL.getInstance().insert(FactSQL.getStatsTable(),
-					new String[] {"UUID","NAME","ADDRESS","POINTS","PLAYTIME","FIRSTJOIN","TOTALVOTES","PARKOURTIME"},
-					new Object[] {uuid.toString(), player.getName(), player.getAddress().getAddress().getHostAddress(), 0, 0, firstJoin, 0, 0});
-			
-			Main.getPlugin().getLogger().info("Successfully added " + player.getName() + " (" + uuid + ") to the database");
-			
-		}
-		
-		else {
-			
-			FactSQL.getInstance().set(FactSQL.getStatsTable(), uuid, "NAME", player.getName());
-			FactSQL.getInstance().set(FactSQL.getStatsTable(), uuid, "ADDRESS", player.getAddress().getAddress().getHostAddress());
-			
-		}
+		FactSQL.getInstance().exists(uuid).thenAccept((exists) -> {
+			if (!exists) {
+				
+				Timestamp firstJoin = new Timestamp((new Date()).getTime());
+				
+				FactSQL.getInstance().insert(FactSQL.getStatsTable(),
+						new String[] {"UUID", "NAME", "ADDRESS", "POINTS", "PLAYTIME", "FIRSTJOIN", "TOTALVOTES", "PARKOURTIME"},
+						new Object[] {uuid.toString(), player.getName(), player.getAddress().getAddress().getHostAddress(), 0, 0, firstJoin, 0, 0});
+				
+				Main.getPlugin().getLogger().info("Successfully added " + player.getName() + " (" + uuid + ") to the database");
+				
+			}
+			else {
+				
+				FactSQL.getInstance().update(FactSQL.getStatsTable(), new String[] {"NAME", "ADDRESS"},
+						new Object[] {player.getName(), player.getAddress().getAddress().getHostAddress()}, "`UUID`=?", uuid.toString());
+				
+			}
+		});
 		
 	}
 	

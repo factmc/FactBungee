@@ -38,38 +38,39 @@ public class CommandLogger implements Listener {
 		if (event.isCommand()) {
 			
 			ProxiedPlayer sender = (ProxiedPlayer) event.getSender();
-			String prefix = CoreUtils.getPrefix(sender.getUniqueId());
-			String cmd = event.getMessage().replaceAll(" ", " " + ChatColor.AQUA);
-			
-			/*String msg = "&7[&4&lAdmin Only&7]&r %prefix%&c%player% &6used command: &c%cmd%";
-			msg = msg.replaceAll("%prefix%", prefix);
-			msg = ChatColor.translateAlternateColorCodes('&', msg);
-			msg = msg.replaceAll("%player%", sender.getName());
-			msg = msg.replaceAll("%cmd%", cmd);*/
-			
-			String msg = PREFIX + ChatColor.translateAlternateColorCodes('&', prefix) + sender.getName()
-					+ " " + ChatColor.BLUE + "used command: " + ChatColor.AQUA + cmd;
-
-			for (ProxiedPlayer player : ProxyServer.getInstance().getPlayers()) {
+			CoreUtils.getPrefix(sender.getUniqueId()).thenAccept((prefix) -> {
 				
-				if (enabled(player) && player.hasPermission("factbungee.seecmds")) {
+				String cmd = event.getMessage().replaceAll(" ", " " + ChatColor.AQUA);
+				
+				/*String msg = "&7[&4&lAdmin Only&7]&r %prefix%&c%player% &6used command: &c%cmd%";
+				msg = msg.replaceAll("%prefix%", prefix);
+				msg = ChatColor.translateAlternateColorCodes('&', msg);
+				msg = msg.replaceAll("%player%", sender.getName());
+				msg = msg.replaceAll("%cmd%", cmd);*/
+				
+				String msg = PREFIX + ChatColor.translateAlternateColorCodes('&', prefix) + sender.getName()
+						+ " " + ChatColor.BLUE + "used command: " + ChatColor.AQUA + cmd;
+
+				for (ProxiedPlayer player : ProxyServer.getInstance().getPlayers()) {
 					
-					if (CoreUtils.isAbove(player.getUniqueId(), sender.getUniqueId()) || player.hasPermission("factbungee.seecmds.all")) {
-					
-						if (player.getServer().getInfo().getName().equals(sender.getServer().getInfo().getName())) {
-							
-							if (player != sender) {
+					if (player != sender && enabled(player) && player.getServer().getInfo().getName().equals(sender.getServer().getInfo().getName())
+							&& player.hasPermission("factbungee.seecmds")) {
 						
-								player.sendMessage(new TextComponent(msg));
-							}
-							
+						if (player.hasPermission("factbungee.seecmds.all")) {
+							player.sendMessage(new TextComponent(msg));
+						}
+						
+						else {
+							CoreUtils.isAbove(player.getUniqueId(), sender.getUniqueId()).thenAccept((isAbove) -> {
+								if (isAbove) player.sendMessage(new TextComponent(msg));
+							});
 						}
 						
 					}
 					
 				}
 				
-			}
+			});
 			
 		}
 		

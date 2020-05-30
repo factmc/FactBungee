@@ -51,7 +51,7 @@ public class LoginEvents implements Listener {
 		final String message;
 		
 		String usedIP = player.getPendingConnection().getVirtualHost().getHostString();
-		if (!(usedIP.equals("srv.factmc.net") || usedIP.equals("play.factmc.net"))) {
+		if (!(usedIP.equals("server.factmc.net") || usedIP.equals("play.factmc.net"))) {
 			title = IP_TITLE;
 			message = IP_MESSAGE;
 		}

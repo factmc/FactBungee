@@ -56,8 +56,14 @@ public class PlayTimeCounter implements Listener {
 			long miliDiff = this.end.getTime() - this.start.getTime();
 			long add = miliDiff / 1000;
 			
-			long current = (long) FactSQL.getInstance().get(FactSQL.getStatsTable(), this.getPlayer().getUniqueId(), "PLAYTIME");
-			FactSQL.getInstance().set(FactSQL.getStatsTable(), this.getPlayer().getUniqueId(), "PLAYTIME", current + add);
+			FactSQL.getInstance().get(FactSQL.getStatsTable(), this.getPlayer().getUniqueId(), "PLAYTIME").thenAccept((current) -> {
+				
+				if (current != null) {
+					long l = (long) current;
+					FactSQL.getInstance().set(FactSQL.getStatsTable(), this.getPlayer().getUniqueId(), "PLAYTIME", l + add);
+				}
+				
+			});
 			
 		}
 		
