@@ -26,7 +26,9 @@ public class FactDataCommand extends Command implements TabExecutor {
 	
 	private static final String PREFIX = ChatColor.GOLD + "[" + ChatColor.DARK_GREEN +
 			ChatColor.BOLD + "FactData" + ChatColor.GOLD + "] ";
+	
 	private Map<CommandSender, UUID> resetConfirmMap = new HashMap<CommandSender, UUID>();
+	private Map<CommandSender, Integer> pruneConfirmMap = new HashMap<CommandSender, Integer>();
 
 	public FactDataCommand() {
 		super("factdata");
@@ -195,7 +197,7 @@ public class FactDataCommand extends Command implements TabExecutor {
 			else if (args[0].equalsIgnoreCase("listplayers")) {
 				if (sender.hasPermission("factbungee.factdata.listplayers")) {
 					
-					FactSQL.getInstance().select(FactSQL.getStatsTable(), "NAME", "").thenAccept((list) -> {
+					FactSQL.getInstance().select(FactSQL.getStatsTable(), new String[] {"NAME", "LASTONLINE"}).thenAccept((list) -> {
 						
 						if (list.isEmpty()) {
 							sender.sendMessage(new TextComponent(PREFIX + ChatColor.RED + "No known players found."
@@ -203,9 +205,16 @@ public class FactDataCommand extends Command implements TabExecutor {
 							return;
 						}
 						
+						long current = System.currentTimeMillis();
 						sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + "Known players (" + list.size() + "):"));
-						for (Object name : list) {
-							sender.sendMessage(new TextComponent(ChatColor.GREEN + " - " + (String) name));
+						for (Map<String, Object> map : list) {
+							
+							long lastOnline = ((Timestamp) map.get("LASTONLINE")).getTime();
+							long lastOnlineDays = (long) Math.ceil(TimeUnit.MILLISECONDS.toDays(current - lastOnline));
+							
+							sender.sendMessage(new TextComponent(ChatColor.GREEN + " - " + (String) map.get("NAME")
+									+ " - Last online " + lastOnlineDays + " days ago"));
+							
 						}
 						
 					});
@@ -330,6 +339,7 @@ public class FactDataCommand extends Command implements TabExecutor {
 						
 						UUID uuid = resetConfirmMap.get(sender);
 						resetConfirmMap.remove(sender);
+						
 						FactSQL.getInstance().getName(uuid).thenAccept((name) -> {
 							
 							FactSQL.getInstance().delete(FactSQL.getAccessTable(), "`UUID`=?", uuid.toString());
@@ -373,6 +383,89 @@ public class FactDataCommand extends Command implements TabExecutor {
 				}
 			}
 			
+			else if (args[0].equalsIgnoreCase("prune")) {
+				if (sender.hasPermission("factbungee.factdata.reset")) {
+					
+					if (args.length < 2) {
+						sender.sendMessage(new TextComponent(ChatColor.RED + "Usage: /" + this.getName() + " prune <days>"));
+						return;
+					}
+					
+					
+					if (pruneConfirmMap.containsKey(sender) && args[1].equalsIgnoreCase("confirm")) {
+						
+						int days = pruneConfirmMap.get(sender);
+						pruneConfirmMap.remove(sender);
+						
+						Timestamp cutoff = new Timestamp(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(days));
+						FactSQL.getInstance().select(FactSQL.getStatsTable(), "UUID", "`LASTONLINE`<?", cutoff).thenAccept((uuids) -> {
+							
+							String where = "`UUID`=?";
+							for (int i = 1; i < uuids.size(); i++)
+								where += " OR `UUID`=?";
+							
+							Object[] values = uuids.toArray();
+							Object[] doubledValues = new Object[values.length * 2];
+							for (int i = 0; i < values.length; i++) {
+								int s = i * 2;
+								doubledValues[s] = values[i];
+								doubledValues[s + 1] = values[i];
+							}
+							
+							FactSQL.getInstance().delete(FactSQL.getAccessTable(), where, values);
+							FactSQL.getInstance().delete(FactSQL.getAchievementsTable(), where, values);
+							FactSQL.getInstance().delete(FactSQL.getModerationTable(), where, values);
+							FactSQL.getInstance().delete(FactSQL.getFriendsTable(), where.replaceAll("`UUID`=\\?", "`UUID`=? OR `FRIEND`=?"), doubledValues);
+							FactSQL.getInstance().delete(FactSQL.getOptionsTable(), where, values);
+							FactSQL.getInstance().delete(FactSQL.getStatsTable(), where, values);
+								
+							sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + "Successfully reset " + uuids.size()
+									+ " players that have not been online in the last " + days + " days"));
+							
+						});
+						return;
+					}
+					
+					
+					try {
+						
+						int days = Integer.parseInt(args[1]);
+						if (days < 1) throw new NumberFormatException();
+						
+						Timestamp cutoff = new Timestamp(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(days));
+						FactSQL.getInstance().count(FactSQL.getStatsTable(), "`LASTONLINE`<?", cutoff).thenAccept((count) -> {
+							
+							if (count <= 0) {
+								sender.sendMessage(new TextComponent(PREFIX + ChatColor.YELLOW
+										+ "There are no players that have not been online in the last " + days + " days"));
+								return;
+							}
+							
+							sender.sendMessage(new TextComponent(PREFIX + ChatColor.RED + "" + ChatColor.BOLD + "CAUTION!"
+									+ ChatColor.YELLOW + " This action is irreversible. To confirm " + ChatColor.YELLOW + "deleting "
+									+ ChatColor.BOLD + "ALL" + ChatColor.YELLOW + " data on " + count
+									+ ChatColor.YELLOW + " players that have not been online in "
+									+ ChatColor.YELLOW + "the last " + days + " days type "
+									+ ChatColor.GOLD + "/factdata prune confirm " + ChatColor.YELLOW + "within 30 " + ChatColor.YELLOW + "seconds"));
+							
+							pruneConfirmMap.put(sender, days);
+							Main.getPlugin().getProxy().getScheduler().schedule(Main.getPlugin(), new Runnable() {
+								@Override
+								public void run() {
+									pruneConfirmMap.remove(sender);
+								}
+							}, 30, TimeUnit.SECONDS);
+							
+						});
+						
+					} catch (NumberFormatException e) {
+						sender.sendMessage(new TextComponent(ChatColor.RED + "That is not a valid number of days"));
+					}
+					return;
+					
+				}
+			}
+			
 		}
 		
 		String list = "";
@@ -381,7 +474,7 @@ public class FactDataCommand extends Command implements TabExecutor {
 		if (sender.hasPermission("factbungee.factdata.seen")) list += list.isEmpty() ? "seen" : "|seen";
 		if (sender.hasPermission("factbungee.factdata.playtime")) list += list.isEmpty() ? "playtime" : "|playtime";
 		if (sender.hasPermission("factbungee.factdata.ip")) list += list.isEmpty() ? "ip" : "|ip";
-		if (sender.hasPermission("factbungee.factdata.reset")) list += list.isEmpty() ? "reset" : "|reset";
+		if (sender.hasPermission("factbungee.factdata.reset")) list += list.isEmpty() ? "reset|prune" : "|reset|prune";
 		sender.sendMessage(new TextComponent(ChatColor.RED + "Usage: /" + this.getName() + " <" + list + ">"));
 		
 	}
@@ -427,8 +520,20 @@ public class FactDataCommand extends Command implements TabExecutor {
 					|| args[0].equalsIgnoreCase("seen") || args[0].equalsIgnoreCase("playtime")) {
 				if (sender.hasPermission("factbungee.factdata." + args[0].toLowerCase())) {
 					
-					if (args.length < 3 && args.length > 1) {
+					if (args.length == 2) {
 						return filter(toList(ProxyServer.getInstance().getPlayers()), args[1]);
+					}
+					
+					return toList();
+					
+				}
+			}
+			
+			else if (args[0].equalsIgnoreCase("prune")) {
+				if (sender.hasPermission("factbungee.factdata.reset")) {
+					
+					if (args.length == 2) {
+						return filter(toList("7", "14", "30", "60", "90"), args[1]);
 					}
 					
 					return toList();
@@ -444,7 +549,7 @@ public class FactDataCommand extends Command implements TabExecutor {
 		if (sender.hasPermission("factbungee.factdata.seen")) list.add("seen");
 		if (sender.hasPermission("factbungee.factdata.playtime")) list.add("playtime");
 		if (sender.hasPermission("factbungee.factdata.ip")) list.add("ip");
-		if (sender.hasPermission("factbungee.factdata.reset")) list.add("reset");
+		if (sender.hasPermission("factbungee.factdata.reset")) { list.add("reset"); list.add("prune"); }
 		if (args.length > 0) return filter(list, args[0]);
 		else return list;
 		
