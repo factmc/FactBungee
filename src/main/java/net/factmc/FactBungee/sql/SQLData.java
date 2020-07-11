@@ -25,7 +25,7 @@ public class SQLData {
 								uuid.toString(), player.getName(),
 								((InetSocketAddress) player.getSocketAddress()).getHostString(),
 								player.getPendingConnection().getVirtualHost().getHostString(),
-								0, firstJoin, 0, 0
+								0, 0, firstJoin, 0, 0
 						});
 				
 				Main.getPlugin().getLogger().info("Successfully added " + player.getName() + " (" + uuid + ") to the database");

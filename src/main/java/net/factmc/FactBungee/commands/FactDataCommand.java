@@ -1,6 +1,7 @@
 package net.factmc.FactBungee.commands;
 
 import net.factmc.FactBungee.Main;
+import net.factmc.FactBungee.sql.SQLData;
 import net.factmc.FactCore.CoreUtils;
 import net.factmc.FactCore.FactSQL;
 import net.md_5.bungee.api.ChatColor;
@@ -218,6 +219,27 @@ public class FactDataCommand extends Command implements TabExecutor {
 						}
 						
 					});
+					
+				}
+			}
+			
+			else if (args[0].equalsIgnoreCase("update")) {
+				if (sender.hasPermission("factbungee.factdata.update")) {
+					
+					if (args.length < 2) {
+						sender.sendMessage(new TextComponent(ChatColor.RED + "Usage: /" + this.getName() + " update <player>"));
+						return;
+					}
+					
+					ProxiedPlayer player = ProxyServer.getInstance().getPlayer(args[1]);
+					if (player == null) {
+						sender.sendMessage(new TextComponent(PREFIX + ChatColor.YELLOW + args[1] + " is not online"));
+						return;
+					}
+					
+					SQLData.updatePlayer(player);
+					sender.sendMessage(new TextComponent(PREFIX + ChatColor.GREEN + "Updated " + player.getName() + " in the database"));
+					return;
 					
 				}
 			}
@@ -473,6 +495,7 @@ public class FactDataCommand extends Command implements TabExecutor {
 		if (sender.hasPermission("factbungee.factdata.listplayers")) list += list.isEmpty() ? "listplayers" : "|listplayers";
 		if (sender.hasPermission("factbungee.factdata.seen")) list += list.isEmpty() ? "seen" : "|seen";
 		if (sender.hasPermission("factbungee.factdata.playtime")) list += list.isEmpty() ? "playtime" : "|playtime";
+		if (sender.hasPermission("factbungee.factdata.update")) list += list.isEmpty() ? "update" : "|update";
 		if (sender.hasPermission("factbungee.factdata.ip")) list += list.isEmpty() ? "ip" : "|ip";
 		if (sender.hasPermission("factbungee.factdata.reset")) list += list.isEmpty() ? "reset|prune" : "|reset|prune";
 		sender.sendMessage(new TextComponent(ChatColor.RED + "Usage: /" + this.getName() + " <" + list + ">"));
@@ -516,7 +539,7 @@ public class FactDataCommand extends Command implements TabExecutor {
 				return toList();
 			}
 			
-			else if (args[0].equalsIgnoreCase("reset") || args[0].equalsIgnoreCase("ip")
+			else if (args[0].equalsIgnoreCase("reset") || args[0].equalsIgnoreCase("update") || args[0].equalsIgnoreCase("ip")
 					|| args[0].equalsIgnoreCase("seen") || args[0].equalsIgnoreCase("playtime")) {
 				if (sender.hasPermission("factbungee.factdata." + args[0].toLowerCase())) {
 					
@@ -548,6 +571,7 @@ public class FactDataCommand extends Command implements TabExecutor {
 		if (sender.hasPermission("factbungee.factdata.listplayers")) list.add("listplayers");
 		if (sender.hasPermission("factbungee.factdata.seen")) list.add("seen");
 		if (sender.hasPermission("factbungee.factdata.playtime")) list.add("playtime");
+		if (sender.hasPermission("factbungee.factdata.update")) list.add("update");
 		if (sender.hasPermission("factbungee.factdata.ip")) list.add("ip");
 		if (sender.hasPermission("factbungee.factdata.reset")) { list.add("reset"); list.add("prune"); }
 		if (args.length > 0) return filter(list, args[0]);
