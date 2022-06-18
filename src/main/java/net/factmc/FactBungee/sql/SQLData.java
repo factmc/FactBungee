@@ -46,8 +46,7 @@ public class SQLData {
 	}
 	
 	public static void saveLastOnline(ProxiedPlayer player) {
-		
-		Timestamp now = new Timestamp((new Date()).getTime());
+		Timestamp now = new Timestamp(System.currentTimeMillis());
 		FactSQL.getInstance().set(FactSQL.getStatsTable(), player.getUniqueId(), "LASTONLINE", now);
 		
 	}

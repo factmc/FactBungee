@@ -8,23 +8,13 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.factmc.FactBungee.commands.*;
+import net.factmc.FactBungee.listeners.*;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
-import net.factmc.FactBungee.commands.BroadcastCommand;
-import net.factmc.FactBungee.commands.CmdLogToggleCommand;
-import net.factmc.FactBungee.commands.DevModeCommand;
-import net.factmc.FactBungee.commands.FactDataCommand;
-import net.factmc.FactBungee.commands.GlobalWhitelistCommand;
-import net.factmc.FactBungee.commands.SuffixCommand;
-import net.factmc.FactBungee.listeners.CommandLogger;
-import net.factmc.FactBungee.listeners.DevelopmentMode;
-import net.factmc.FactBungee.listeners.LoginEvents;
-import net.factmc.FactBungee.listeners.PlayerVote;
-import net.factmc.FactBungee.listeners.ServerFallbackListener;
-import net.factmc.FactBungee.listeners.WhitelistManager;
 import net.factmc.FactBungee.sql.PlayTimeCounter;
 
 public class Main extends Plugin {
@@ -100,7 +90,8 @@ public class Main extends Plugin {
 		listeners.add(new LoginEvents());
 		listeners.add(new PlayTimeCounter(null));
 		PlayTimeCounter.startAutoRefresh();
-		listeners.add(new PlayerVote());
+		listeners.add(new SessionListener());
+		//listeners.add(new PlayerVote());
 		listeners.add(new WhitelistManager());
 		listeners.add(new DevelopmentMode());
 		listeners.add(new ServerFallbackListener());
@@ -111,8 +102,8 @@ public class Main extends Plugin {
 	}
 
 	public void registerCommands() {
-		getProxy().getPluginManager().registerCommand(plugin, new SuffixCommand());
 		getProxy().getPluginManager().registerCommand(plugin, new FactDataCommand());
+		getProxy().getPluginManager().registerCommand(plugin, new SessionStatsCommand());
 		getProxy().getPluginManager().registerCommand(plugin, new GlobalWhitelistCommand());
 		getProxy().getPluginManager().registerCommand(plugin, new DevModeCommand());
 		getProxy().getPluginManager().registerCommand(plugin, new BroadcastCommand());
